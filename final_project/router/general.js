@@ -79,26 +79,30 @@ public_users.get('/author/:author', async function (req, res) {
     }
   });
 
-public_users.get('/booksdb', (req, res) => {
-    res.status(200).json(books);
-  });
-
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  const title = req.params.title;
-  const booksByTitle = [];
-  for (let key in books) {
-    if (books[key].title.toLowerCase() === title.toLocaleLowerCase()){
-        booksByTitle.push({isbn: key, ...books[key]});
+public_users.get('/title/:title', async function (req, res) {
+    const title = req.params.title.toLowerCase();
+  
+    try {
+      const response = await axios.get('http://localhost:5000/booksdb');
+      const allBooks = response.data;
+  
+      const booksByTitle = [];
+      for (let key in allBooks) {
+        if (allBooks[key].title.toLowerCase() === title) {
+          booksByTitle.push({ isbn: key, ...allBooks[key] });
+        }
+      }
+  
+      if (booksByTitle.length > 0) {
+        res.status(200).send(JSON.stringify(booksByTitle, null, 4));
+      } else {
+        res.status(404).json({ message: `No books found with title '${req.params.title}'.` });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch books.", error: error.message });
     }
-  }
-  if (booksByTitle.length > 0){
-    res.status(200).send(JSON.stringify(booksByTitle, null, 4));
-  } else {
-    res.status(404).json({message: "No books found"});
-  }
-});
+  });
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
