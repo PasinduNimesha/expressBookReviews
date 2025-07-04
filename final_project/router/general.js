@@ -32,39 +32,56 @@ public_users.get('/', async function (req, res) {
     }
   });
 
+public_users.get('/booksdb', (req, res) => {
+    res.status(200).json(books);
+  });
+
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-  // Get the ISBN from the request parameters
-  const isbn = req.params.isbn;
-
-  // Find the book by ISBN
-  const book = books[isbn];
-
-  if (book) {
-    // If found, send the book details
-    res.status(200).send(JSON.stringify(book, null, 4));
-  } else {
-    // If not found, send a 404 error
-    res.status(404).json({ message: `Book with ISBN ${isbn} not found.` });
-  }
-});
+public_users.get('/isbn/:isbn', async function (req, res) {
+    const isbn = req.params.isbn;
   
-// Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  //Write your code here
-  const author = req.params.author;
-  const booksByAuthor = [];
-  for (let key in books) {
-    if (books[key].author.toLowerCase() === author.toLocaleLowerCase()){
-        booksByAuthor.push({isbn: key, ...books[key]});
+    try {
+      const response = await axios.get('http://localhost:5000/booksdb');
+      const book = response.data[isbn];
+  
+      if (book) {
+        res.status(200).send(JSON.stringify(book, null, 4));
+      } else {
+        res.status(404).json({ message: `Book with ISBN ${isbn} not found.` });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch book details.", error: error.message });
     }
-  }
-  if (booksByAuthor.length > 0){
-    res.status(200).send(JSON.stringify(booksByAuthor, null, 4));
-  } else {
-    res.status(404).json({message: "No books found"});
-  }
-});
+  });
+// Get book details based on author
+public_users.get('/author/:author', async function (req, res) {
+    const author = req.params.author.toLowerCase();
+  
+    try {
+      const response = await axios.get('http://localhost:5000/booksdb');
+      const allBooks = response.data;
+  
+      // Filter books by author
+      const booksByAuthor = [];
+      for (let key in allBooks) {
+        if (allBooks[key].author.toLowerCase() === author) {
+          booksByAuthor.push({ isbn: key, ...allBooks[key] });
+        }
+      }
+  
+      if (booksByAuthor.length > 0) {
+        res.status(200).send(JSON.stringify(booksByAuthor, null, 4));
+      } else {
+        res.status(404).json({ message: `No books found for author '${req.params.author}'.` });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch books.", error: error.message });
+    }
+  });
+
+public_users.get('/booksdb', (req, res) => {
+    res.status(200).json(books);
+  });
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
