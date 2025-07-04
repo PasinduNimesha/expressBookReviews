@@ -22,10 +22,15 @@ public_users.post("/register", (req,res) => {
 });
 
 // Get the book list available in the shop
-public_users.get('/', function (req, res) {
-  // Send the list of all books as a JSON response
-  res.status(200).send(JSON.stringify(books, null, 4));
-});
+public_users.get('/', async function (req, res) {
+    try {
+      // Simulate fetching books from an API using Axios
+      const response = await axios.get('http://localhost:5000/booksdb'); // <-- Dummy endpoint
+      res.status(200).send(JSON.stringify(response.data, null, 4));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch books.", error: error.message });
+    }
+  });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
